@@ -356,7 +356,8 @@ def create_venue_submission():
   newVenue=Venue()
 
   newVenue.name=request.form.get('name','')
-  newVenue.genres=request.form.get('genres','')
+  
+  newVenue.genres=getGenresStr(request.form.getlist('genres'))
   newVenue.city=request.form.get('city','')
   newVenue.state=request.form.get('state','')
   newVenue.address=request.form.get('address','')
@@ -489,7 +490,8 @@ def show_artist(artist_id):
   data['seeking_description']=artist.seeking_description
   data['image_link']=artist.image_link
   
-  showsandartists=db.session.query(Shows,Artist).join(Artist).filter(Shows.artist_id==artist_id).all()
+  #showsandartists=db.session.query(Shows,Artist).join(Artist).filter(Shows.artist_id==artist_id).all()
+  showsandartists=db.session.query(Shows,Artist,Venue).join(Artist).join(Venue).filter(Shows.artist_id==artist_id,Shows.venue_id==Venue.id).all()
   
   pastShowNode=[]
   upcomingShows=[]
@@ -501,16 +503,16 @@ def show_artist(artist_id):
     upcomingshow={}
     pastshow={}
     if showdate > datetime.now():
-      upcomingshow['artist_id']=showsandartist[1].id
-      upcomingshow['artist_name']=showsandartist[1].name
-      upcomingshow['artist_image_link']=showsandartist[1].image_link
+      upcomingshow['venue_id']=showsandartist[2].id
+      upcomingshow['venue_name']=showsandartist[2].name
+      upcomingshow['venue_image_link']=showsandartist[2].image_link
       upcomingshow['start_time']=showsandartist[0].startdate.strftime("%m/%d/%Y %H:%M:%S")
       upcomingShows.append(upcomingshow)
       upcomingShowCount+=1
     else:
-      pastshow['artist_id']=showsandartist[1].id
-      pastshow['artist_name']=showsandartist[1].name
-      pastshow['artist_image_link']=showsandartist[1].image_link
+      pastshow['venue_id']=showsandartist[2].id
+      pastshow['venue_name']=showsandartist[2].name
+      pastshow['venue_image_link']=showsandartist[2].image_link
       pastshow['start_time']=showsandartist[0].startdate.strftime("%m/%d/%Y %H:%M:%S")
       pastShowNode.append(pastshow)
       pastShowCount+=1
@@ -628,7 +630,7 @@ def edit_artist_submission(artist_id):
   artist=Artist()
   artist=db.session.query(Artist).get(artist_id)
   artist.name=request.form.get('name','')
-  artist.genres=request.form.get('genres','')
+  artist.genres=getGenresStr(request.form.getlist('genres'))
   artist.city=request.form.get('city','')
   artist.state=request.form.get('state','')
   artist.phone=request.form.get('phone','')
@@ -682,7 +684,7 @@ def edit_venue_submission(venue_id):
   venue=Venue()
   venue=db.session.query(Venue).get(venue_id)
   venue.name=request.form.get('name','')
-  venue.genres=request.form.get('genres','')
+  venue.genres=getGenresStr(request.form.getlist('genres'))
   venue.city=request.form.get('city','')
   venue.state=request.form.get('state','')
   venue.address=request.form.get('address','')
@@ -724,7 +726,7 @@ def create_artist_submission():
   newArtist=Artist()
 
   newArtist.name=request.form.get('name','')
-  newArtist.genres=request.form.get('genres','')
+  newArtist.genres=getGenresStr(request.form.getlist('genres'))
   newArtist.city=request.form.get('city','')
   newArtist.state=request.form.get('state','')
   newArtist.phone=request.form.get('phone','')
@@ -874,6 +876,17 @@ if not app.debug:
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
     app.logger.info('errors')
+
+def getGenresStr (genresList):
+  retVal=''
+  rangeVal=len(genresList)
+  for i in range(0, rangeVal):
+    retVal=retVal+genresList[i]
+    if i< rangeVal-1:
+      retVal=retVal+","
+  return retVal
+    
+
 
 #----------------------------------------------------------------------------#
 # Launch.
